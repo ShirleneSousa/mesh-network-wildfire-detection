@@ -37,17 +37,15 @@ void broadcast_message(Sensor *this, Message msg)
 
     msg.ttl--;
 
-    // Sensor **neighbours = _get_neighbours(this);
+    Sensor **neighbors = _get_neighbors(this);
 
     for (int i = 0; i < 4; i++)
     {
-        Sensor *t = this->neighbors[i];
+        Sensor *t = neighbors[i];
 
         if (t != NULL && is_in_bounds(t->x, t->y))
             enqueue(t->message_queue, msg);
     }
-
-    // free(neighbours);
 }
 
 Sensor *create_sensor(int x, int y)
@@ -68,22 +66,6 @@ void init_sensors()
     for (int i = 1, k = 0; i < MAP_SIZE; i += 3)
         for (int j = 1; j < MAP_SIZE; j += 3)
             sensors[k++] = create_sensor(i, j);
-
-    // /* Set neighbours */
-    // for (int i = 0; i < N_THREADS; i++)
-    // {
-    //     Sensor *s = sensors[i];
-    //     int x = s->x, y = s->y;
-
-    //     if (is_in_bounds(x - 3, y)) // top
-    //         s->neighbors[0] = _get_sensor_from_coords(x - 3, y);
-    //     if (is_in_bounds(x, y + 3)) // right
-    //         s->neighbors[1] = _get_sensor_from_coords(x, y + 3);
-    //     if (is_in_bounds(x + 3, y)) // bottom
-    //         s->neighbors[2] = _get_sensor_from_coords(x + 3, y);
-    //     if (is_in_bounds(x, y - 3)) // left
-    //         s->neighbors[3] = _get_sensor_from_coords(x, y - 3);
-    // }
 }
 
 void destroy_sensor(Sensor *t)

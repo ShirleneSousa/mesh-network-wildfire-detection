@@ -4,12 +4,11 @@
 #define MAP_SIZE 15
 #define N_THREADS ((MAP_SIZE / 3) * (MAP_SIZE / 3))
 
-#define QUEUE_MAX_SIZE (MAP_SIZE * MAP_SIZE)
-#define TTL MAP_SIZE
+#define TTL MAP_SIZE / 2
 
 /* Delays */
 #define DELAY_SENSOR 1
-#define DELAY_FOGO 2
+#define DELAY_FOGO 5
 #define DELAY_BOMBEIRO 2
 
 /* Paths */

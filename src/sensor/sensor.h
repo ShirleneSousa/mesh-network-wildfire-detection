@@ -9,7 +9,6 @@ typedef struct __sensor
 {
     char id[5];
     int x, y;
-    struct __sensor *neighbors[4];
     Queue *message_queue;
 } Sensor;
 

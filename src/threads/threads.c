@@ -24,7 +24,6 @@ void create_threads()
     pthread_create(&bombeiro, NULL, &thread_bombeiro, NULL);
 }
 
-
 static void send_message_to_central(Message msg)
 {
     enqueue(&central_queue, msg); // manda mensagem pra thread central
@@ -76,21 +75,23 @@ void *thread_sensor(void *arg)
 /* Recebe alertas de incêncio e loga os que são inéditos */
 void *thread_central(void *arg)
 {
-    FILE *fp;
     Message msg;
+    FILE *fp;
 
     while (true)
     {
         while (!is_empty(&central_queue))
         {
-            fp = fopen(LOG_PATH, "a+");
             msg = dequeue(&central_queue);
 
+            fp = fopen(LOG_PATH, "a+");
             if (is_mensagem_inedita(fp, msg))
                 write_message(fp, msg);
 
             fclose(fp);
         }
+
+        sleep(DELAY_SENSOR);
     }
 
     destroy_queue(&central_queue);
@@ -134,7 +135,8 @@ void *thread_bombeiro(void *arg)
 void *thread_incendio(void *arg)
 {
     int x, y;
-    srand(time(NULL));
+    // srand(time(NULL));
+    srand(13);
 
     while (true)
     {
