@@ -7,8 +7,10 @@ BINDIR = bin
 SRC := $(shell find . -name '*.c')
 OBJ = $(patsubst %.c,$(OBJDIR)/%.o,$(SRC))
 
-all: binfolder objfolder bin/detector_incendio
+all: 
 	@./bin/detector_incendio
+
+compile: binfolder objfolder bin/detector_incendio
 
 bin/detector_incendio: $(OBJ)
 	@$(CC) $(CFLAGS) $(OBJ) -o $@ $(LDFLAGS)

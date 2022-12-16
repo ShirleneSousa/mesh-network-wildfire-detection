@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 Queue central_queue;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void create_threads()
 {
@@ -27,9 +26,7 @@ void create_threads()
 
 static void _send_message_to_central(Message msg)
 {
-    // pthread_mutex_lock(&mutex);
     enqueue(&central_queue, msg); // manda mensagem pra thread central
-    // pthread_mutex_unlock(&mutex);
 }
 
 void *thread_sensor(void *arg)
@@ -83,11 +80,9 @@ void *thread_central(void *arg)
 
     while (true)
     {
-        int size = 0;
         while (!is_empty(&central_queue))
         {
             msg = dequeue(&central_queue);
-            size++;
 
             fp = fopen(LOG_PATH, "a+");
 
@@ -97,7 +92,6 @@ void *thread_central(void *arg)
             fclose(fp);
         }
 
-        // printf("size: %d\n", size);
     }
 
     destroy_queue(&central_queue);
