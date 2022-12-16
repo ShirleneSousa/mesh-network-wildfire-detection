@@ -1,7 +1,6 @@
 #include "sensor.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 static Sensor *_get_sensor_from_coords(int x, int y)
 {
@@ -32,10 +31,10 @@ static Sensor **_get_neighbors(Sensor *this)
 
 void broadcast_message(Sensor *this, Message msg)
 {
-    if (msg.ttl == 0)
+    if (msg.visits->length > MAP_SIZE)
         return;
 
-    msg.ttl--;
+    add_visit(msg, this->id);
 
     Sensor **neighbors = _get_neighbors(this);
 
@@ -43,7 +42,7 @@ void broadcast_message(Sensor *this, Message msg)
     {
         Sensor *t = neighbors[i];
 
-        if (t != NULL && is_in_bounds(t->x, t->y))
+        if (t != NULL && is_in_bounds(t->x, t->y) && !was_visited(msg, t->id))
             enqueue(t->message_queue, msg);
     }
 }

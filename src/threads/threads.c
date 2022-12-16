@@ -1,12 +1,13 @@
 #include "threads.h"
 #include "../sensor/sensor.h"
 #include "../utils/utils.h"
-#include "../queue/queue.h"
+#include "../data_structures/queue/queue.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 
 Queue central_queue;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void create_threads()
 {
@@ -24,9 +25,11 @@ void create_threads()
     pthread_create(&bombeiro, NULL, &thread_bombeiro, NULL);
 }
 
-static void send_message_to_central(Message msg)
+static void _send_message_to_central(Message msg)
 {
+    // pthread_mutex_lock(&mutex);
     enqueue(&central_queue, msg); // manda mensagem pra thread central
+    // pthread_mutex_unlock(&mutex);
 }
 
 void *thread_sensor(void *arg)
@@ -36,17 +39,6 @@ void *thread_sensor(void *arg)
 
     while (is_operational(T))
     {
-        /* Checar se recebeu mensagens e repassa ela pros vizinhos ou pra central */
-        while (!is_empty(T->message_queue))
-        {
-            msg = dequeue(T->message_queue);
-
-            if (is_on_border(T))
-                send_message_to_central(msg);
-            else
-                broadcast_message(T, msg);
-        }
-
         /* Checar por incendios nos elementos vizinhos */
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
@@ -59,11 +51,22 @@ void *thread_sensor(void *arg)
                     msg = create_message(T->id, cellX, cellY);
 
                     if (is_on_border(T))
-                        send_message_to_central(msg);
+                        _send_message_to_central(msg);
                     else
                         broadcast_message(T, msg);
                 }
             }
+
+        /* Checar se recebeu mensagens e repassa ela pros vizinhos ou pra central */
+        while (!is_empty(T->message_queue))
+        {
+            msg = dequeue(T->message_queue);
+
+            if (is_on_border(T))
+                _send_message_to_central(msg);
+            else
+                broadcast_message(T, msg);
+        }
 
         sleep(DELAY_SENSOR);
     }
@@ -80,18 +83,21 @@ void *thread_central(void *arg)
 
     while (true)
     {
+        int size = 0;
         while (!is_empty(&central_queue))
         {
             msg = dequeue(&central_queue);
+            size++;
 
             fp = fopen(LOG_PATH, "a+");
+
             if (is_mensagem_inedita(fp, msg))
                 write_message(fp, msg);
 
             fclose(fp);
         }
 
-        sleep(DELAY_SENSOR);
+        // printf("size: %d\n", size);
     }
 
     destroy_queue(&central_queue);
@@ -101,7 +107,8 @@ void *thread_central(void *arg)
 /* Apaga incendios indicados pela central após 2 segundos */
 void *thread_bombeiro(void *arg)
 {
-    Message msg;
+    char log_timestamp[9];
+    int x, y;
     FILE *fp;
     int offset = 0;
 
@@ -113,14 +120,14 @@ void *thread_bombeiro(void *arg)
             fp = fopen(LOG_PATH, "r");
             fseek(fp, offset, SEEK_SET); // Pula para última posição lida
 
-            while (read_message(fp, &msg) != EOF)
+            while (fscanf(fp, "%s | %*s detectou um incêndio em (%d,%d) as %*s\n", log_timestamp, &x, &y) != EOF)
             {
-                int time_diff = time_diff_in_seconds(now(), msg.time);
+                int time_diff = time_diff_in_seconds(now(), string_to_tm(log_timestamp));
 
                 if (time_diff == DELAY_BOMBEIRO)
                 {
-                    mapa[msg.x][msg.y] = '-'; // Apaga incendio
-                    offset = ftell(fp);       // Salva última posição lida
+                    mapa[x][y] = '-';   // Apaga incendio
+                    offset = ftell(fp); // Salva última posição lida
                 }
             }
 
@@ -135,8 +142,7 @@ void *thread_bombeiro(void *arg)
 void *thread_incendio(void *arg)
 {
     int x, y;
-    // srand(time(NULL));
-    srand(13);
+    srand(time(NULL));
 
     while (true)
     {

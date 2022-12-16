@@ -45,18 +45,12 @@ Message dequeue(Queue *q)
     Message msg;
     QueueNode *aux;
 
-    if (is_empty(q))
-    {
-        perror("Fila vazia");
-        exit(EXIT_FAILURE);
-    }
-
     aux = q->first;
 
     q->first = q->first->next;
     msg = aux->msg;
 
-    // free(aux);
+    free(aux);
 
     return msg;
 }

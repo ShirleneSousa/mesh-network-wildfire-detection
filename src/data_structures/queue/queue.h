@@ -1,8 +1,9 @@
 #if !defined(FILA_H)
 #define FILA_H
 
-#include "../message/message.h"
-#include "../constants.h"
+#include "../../message/message.h"
+#include "../../constants.h"
+#include <stdbool.h>
 
 typedef struct __queue_node
 {

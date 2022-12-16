@@ -1,7 +1,7 @@
 #if !defined(CONSTANTS_H)
 #define CONSTANTS_H
 
-#define MAP_SIZE 15
+#define MAP_SIZE 30
 #define N_THREADS ((MAP_SIZE / 3) * (MAP_SIZE / 3))
 
 #define TTL MAP_SIZE / 2

@@ -2,16 +2,20 @@
 #include "../utils/utils.h"
 #include "../constants.h"
 #include <string.h>
+#include <stdbool.h>
+#include <pthread.h>
 
-static int _time_diff(Message m1, Message m2)
+static int _time_diff(Message m1, char aux_time[9])
 {
-    int m1_time = m1.time->tm_hour * 3600 + m1.time->tm_min * 60 + m1.time->tm_sec;
-    int m2_time = m2.time->tm_hour * 3600 + m2.time->tm_min * 60 + m2.time->tm_sec;
+    struct tm *t1 = string_to_tm(m1.time);
+    struct tm *t2 = string_to_tm(aux_time);
 
-    m1_time += (TTL - m1.ttl);
-    m2_time += (TTL - m2.ttl);
+    int t1_sec = t1->tm_hour * 3600 + t1->tm_min * 60 + t1->tm_sec;
+    int t2_sec = t2->tm_hour * 3600 + t2->tm_min * 60 + t2->tm_sec;
 
-    return m1_time - m2_time;
+    int diff = t1_sec - t2_sec;
+
+    return diff;
 }
 
 Message create_message(char *source_id, int x, int y)
@@ -21,35 +25,31 @@ Message create_message(char *source_id, int x, int y)
     strcpy(msg.source_id, source_id);
     msg.x = x;
     msg.y = y;
-    msg.time = now();
-    msg.ttl = TTL;
+    strcpy(msg.time, tm_to_string(now()));
+
+    msg.visits = create_list();
 
     return msg;
 }
 
 void write_message(FILE *fp, Message msg)
 {
-
-    fseek(fp, 0, SEEK_END);
     fprintf(fp, "%s | %s detectou um incêndio em (%d,%d) as %s\n",
             tm_to_string(now()),
             msg.source_id,
             msg.x,
             msg.y,
-            tm_to_string(msg.time));
+            msg.time);
 }
 
-int read_message(FILE *fp, Message *msg)
+int read_message(FILE *fp, char *log_timestamp, Message *msg)
 {
-    char time[9];
-
-    int res = fscanf(fp, "%*s | %s detectou um incêndio em (%d,%d) as %s\n",
+    int res = fscanf(fp, "%s | %s detectou um incêndio em (%d,%d) as %s\n",
+                     log_timestamp,
                      msg->source_id,
                      &msg->x,
                      &msg->y,
-                     time);
-
-    msg->time = string_to_tm(time);
+                     msg->time);
 
     return res;
 }
@@ -58,16 +58,28 @@ int read_message(FILE *fp, Message *msg)
 bool is_mensagem_inedita(FILE *fp, Message msg)
 {
     Message aux;
+    char aux_log_timestamp[9];
 
-    while (read_message(fp, &aux) != EOF)
+
+    while (read_message(fp, aux_log_timestamp, &aux) != EOF)
     {
         bool is_same_position = (aux.x == msg.x) && (aux.y == msg.y);
-        
-        int time_diff = _time_diff(msg, aux);
+
+        int time_diff = _time_diff(msg, aux_log_timestamp);
 
         if (is_same_position && (time_diff <= DELAY_BOMBEIRO))
             return false;
     }
 
     return true;
+}
+
+void add_visit(Message msg, char *sensor_id)
+{
+    add_node(msg.visits, sensor_id);
+}
+
+bool was_visited(Message msg, char *sensor_id)
+{
+    return contains(msg.visits, sensor_id);
 }

@@ -1,11 +1,10 @@
 #if !defined(SENSOR_H)
 #define SENSOR_H
 
-#include "../queue/queue.h"
+#include "../data_structures/queue/queue.h"
 #include "../map/map.h"
-#include "../message/message.h"
 
-typedef struct __sensor
+typedef struct _sensor
 {
     char id[5];
     int x, y;

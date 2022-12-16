@@ -1,6 +1,8 @@
 #if !defined(THREADS_H)
 #define THREADS_H
 
+#include <pthread.h>
+
 void create_threads();
 
 void *thread_sensor(void *arg);

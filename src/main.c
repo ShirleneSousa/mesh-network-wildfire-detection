@@ -23,6 +23,6 @@ int main(int argc, char const *argv[])
     }
 
     pthread_exit(NULL);
-    
+
     return 0;
 }
